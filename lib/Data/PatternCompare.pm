@@ -61,8 +61,11 @@ sub _pattern_match {
     my $ref = ref($expected);
     unless ($ref) {
         # simple type
-        unless (defined $expected) {
-            return 1 unless defined $got;
+        unless (defined $expected && defined $got) {
+            unless (defined $expected || defined $got) {
+                return 1;
+            }
+            return 0;
         }
 
         if (looks_like_number($expected)) {
@@ -125,10 +128,36 @@ sub _compare_ARRAY {
 
         return $res if $res;
     }
+
+    return 0;
 }
 
 sub _compare_HASH {
     my ($self, $pa, $pb) = @_;
+
+    my ($sizea, $sizeb, $matched) = (0) x 3;
+    for my $key ( keys %$pa ) {
+        if (exists $pb->{$key}) {
+            ++$matched;
+        } else {
+            ++$sizea;
+        }
+    }
+    $sizeb = scalar(keys %$pb) - $matched;
+
+    unless ($sizea eq $sizeb) {
+        return $sizea > $sizeb ? -1 : 1;
+    }
+
+    for my $key ( keys %$pa ) {
+        next unless exists $pb->{$key};
+
+        my $res = $self->_compare_pattern($pa->{$key}, $pb->{$key});
+
+        return $res if $res;
+    }
+
+    return 0;
 }
 
 sub _compare_pattern {
