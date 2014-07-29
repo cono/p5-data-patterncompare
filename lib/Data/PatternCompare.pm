@@ -287,7 +287,7 @@ data: Integers, Strings, Objects, ...
 This method takes 2 pattern as an arguments and return Integer value like any
 other comparator does.
 
-    return_value < 0 - means that C<$pattern_a> more strict than $pattern_b
+    return_value < 0 - means that $pattern_a more strict than $pattern_b
                    0 - pattern are equal to each others
     0 < return_value - $pattern_a wider than $pattern_b
 
