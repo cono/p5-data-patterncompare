@@ -135,15 +135,8 @@ sub _compare_ARRAY {
 sub _compare_HASH {
     my ($self, $pa, $pb) = @_;
 
-    my ($sizea, $sizeb, $matched) = (0) x 3;
-    for my $key ( keys %$pa ) {
-        if (exists $pb->{$key}) {
-            ++$matched;
-        } else {
-            ++$sizea;
-        }
-    }
-    $sizeb = scalar(keys %$pb) - $matched;
+    my $sizea = scalar keys(%$pa);
+    my $sizeb = scalar keys(%$pb);
 
     unless ($sizea eq $sizeb) {
         return $sizea > $sizeb ? -1 : 1;
@@ -230,3 +223,131 @@ package Data::PatternCompare::Any;
 sub new { bless({}); }
 
 42;
+
+__END__
+
+=head1 NAME
+
+Data::PatternCompare - Module to match data to pattern.
+
+=head1 SYNOPSIS
+
+Create a comparator object.
+
+    use Data::PatternCompare;
+
+    my $cmp = Data::PatternCompare->new;
+
+You can match Perl data structure to pattern like so:
+
+    my $data = [1, 2, { name => "cono" }];
+    my $pattern = [1, 2, { name => $Data::PatternCompare::any }];
+
+    if ($cmp->pattern_match($data, $pattern)) {
+        print "Matched";
+    }
+
+If you have array of patterns, you can sort them from stricter to wider like
+so:
+
+    my @array_of_patterns = ( ... );
+
+    my @sorted = sort { $cmp->compare_pattern($a, $b) } @array_of_patterns;
+
+=head1 DESCRIPTION
+
+This module provides to you functionality of matching Perl data structures to
+patterns. Could be used for some kind of multi method dispatching.
+
+This module is far from high performance.
+
+=head1 METHODS
+
+=head2 new()
+
+Simple constructor. Does not take any arguments. Returns instance of the
+Data::PatternCompare class.
+
+=head2 pattern_match($data, $pattern) : Boolean
+
+This method takes 2 arguments, Perl data structure and pattern. Returns true if
+data matches to pattern.
+
+Pattern can contain special objects of class C<Data::PatternCompare::Any>, you
+can refer to instance of this class simply using C<$Data::PatternCompare::any>
+variable.
+
+C<$Data::PatterCompare::any> can be used to match any value.
+
+So call C<pattern_match( DATA, $Data::PatternCompare::any)> will match any
+data: Integers, Strings, Objects, ...
+
+=head2 compare_pattern($pattern_a, $pattern_b) : Integer
+
+This method takes 2 pattern as an arguments and return Integer value like any
+other comparator does.
+
+    return_value < 0 - means that C<$pattern_a> more strict than $pattern_b
+                   0 - pattern are equal to each others
+    0 < return_value - $pattern_a wider than $pattern_b
+
+=head3 Simple type
+
+What stricter/wider means?
+
+If we take 2 following patterns:
+
+=over 4
+
+=item 1. 42
+
+=item 2. C<$Data::PatternCompare::any>
+
+=back
+
+The second one is more wide. If we represent patterns as a set of values, that
+means that second pattern contain first one. In another words: 42 is a member
+of Set C<any>.
+
+=head3 Array
+
+Before matching values inside of the array, length of array is taking into
+consideration. Arrays with bigger length are more strict.
+
+This rule applies because we consider: C<pattern_match([42, 1], [42])> as true
+value.
+
+=head3 Hash
+
+The same rules as for the Array. The bigger size of the hash treats as
+stricter.
+
+e.g.:
+
+    $cmp->compare_pattern({ qw|a b c d| }, { qw|a b| }) # -1
+
+Be careful with the following example:
+
+    $cmp->compare_pattern(
+        { a => $Data::PatternCompare::any, b => 42 },
+        { a => 42, b => $Data::PatternCompare::any }
+    );
+
+Result of the code above is unpredicted. It depends on in what order keys will
+be returned by the C<keys()> function.
+
+=head1 AUTHOR
+
+cono E<lt>cono@cpan.orgE<gt>
+
+=head1 COPYRIGHT
+
+Copyright 2014 - cono
+
+=head1 LICENSE
+
+Artistic v2.0
+
+=head1 SEE ALSO
+
+=cut
