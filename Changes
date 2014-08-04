@@ -1,5 +1,10 @@
 Release history of Data::PatternCompare
 
+0.02 2013-08-04
+
+  * Add Changes file
+  * Fix version variable
+
 0.01 2013-07-29
 
   * First Release to CPAN

@@ -5,7 +5,7 @@ use warnings;
 
 use Scalar::Util qw(looks_like_number refaddr blessed);
 
-our $VERSION = v0.01;
+our $VERSION = '0.02';
 
 our $any  = Data::PatternCompare::Any->new;
 
