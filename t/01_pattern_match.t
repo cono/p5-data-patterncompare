@@ -49,6 +49,10 @@ subtest 'hash match' => sub {
     not_match({a => 'b'}, [ data => $Data::PatternCompare::any ], 'any is not match if key is not exists');
 };
 
+subtest 'bugs' => sub {
+    not_match([ "hello" ], [ 0 ], "string not equal to 0");
+};
+
 done_testing;
 
 sub not_match {

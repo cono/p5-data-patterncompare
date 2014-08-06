@@ -69,6 +69,7 @@ sub _pattern_match {
         }
 
         if (looks_like_number($expected)) {
+            return 0 unless looks_like_number($got);
             return $expected == $got;
         }
 
