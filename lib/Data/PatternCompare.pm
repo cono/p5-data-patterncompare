@@ -3,7 +3,9 @@ package Data::PatternCompare;
 use strict;
 use warnings;
 
+use POSIX;
 use Scalar::Util qw(looks_like_number refaddr blessed);
+use Scalar::Util::Numeric qw(isfloat);
 
 our $VERSION = '0.02';
 
@@ -14,6 +16,7 @@ sub new {
     my %params = @_;
 
     @params{qw(_dup_addr _dup_addra _dup_addrb)} = ({}, {}, {});
+    $params{'epsilon'} ||= POSIX::DBL_EPSILON;
 
     return bless(\%params, $class);
 }
@@ -70,6 +73,10 @@ sub _pattern_match {
 
         if (looks_like_number($expected)) {
             return 0 unless looks_like_number($got);
+
+            if (isfloat($expected) || isfloat($got)) {
+                return abs($expected - $got) < $self->{'epsilon'};
+            }
             return $expected == $got;
         }
 

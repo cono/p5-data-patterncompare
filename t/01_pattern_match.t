@@ -1,4 +1,3 @@
-
 use strict;
 use warnings;
 
@@ -18,6 +17,8 @@ subtest 'simple match' => sub {
     match(undef, undef, 'undef value match');
     not_match(42, undef, 'value does not match undef');
     not_match(undef, 42, 'undef does not match value');
+
+    match(sqrt(5), sqrt(5), 'float match');
 
     match(42, $Data::PatternCompare::any, 'compare int to any');
     match("hello", $Data::PatternCompare::any, 'compare string to any');
@@ -50,7 +51,7 @@ subtest 'hash match' => sub {
 };
 
 subtest 'bugs' => sub {
-    not_match([ "hello" ], [ 0 ], "string not equal to 0");
+    not_match("hello", 0, "string not equal to 0");
 };
 
 done_testing;
