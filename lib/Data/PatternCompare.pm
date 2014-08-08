@@ -7,7 +7,7 @@ use POSIX;
 use Scalar::Util qw(looks_like_number refaddr blessed);
 use Scalar::Util::Numeric qw(isfloat);
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 our $any  = Data::PatternCompare::Any->new;
 

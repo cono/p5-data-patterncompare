@@ -1,5 +1,11 @@
 Release history of Data::PatternCompare
 
+0.03 2013-08-08
+
+  * Add float comparison functionality
+  * Add strict pattern comparison (eq_pattern)
+  * Fix bugs
+
 0.02 2013-08-04
 
   * Add Changes file
