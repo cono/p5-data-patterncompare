@@ -18,7 +18,8 @@ subtest 'simple match' => sub {
     not_match(42, undef, 'value does not match undef');
     not_match(undef, 42, 'undef does not match value');
 
-    match(sqrt(5), sqrt(5), 'float match');
+    match(0.1 + 0.2 + 0.3, 0.6, 'float match');
+    not_match(0.6, 1, 'float ot int match');
 
     match(42, $Data::PatternCompare::any, 'compare int to any');
     match("hello", $Data::PatternCompare::any, 'compare string to any');
