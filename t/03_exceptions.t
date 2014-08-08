@@ -31,6 +31,16 @@ subtest 'compare_pattern exceptions' => sub {
     done_testing;
 };
 
+subtest 'eq_pattern exceptions' => sub {
+    my $x = [42];
+    $x->[0] = $x;
+
+    eq_p([[42]], $x, 'cycled pattern 2');
+
+    delete($x->[0]);
+    done_testing;
+};
+
 done_testing;
 
 sub match {
@@ -48,6 +58,16 @@ sub compare {
 
     eval {
         $m->compare_pattern($pat1, $pat2);
+    };
+
+    ok($@, $message);
+}
+
+sub eq_p {
+    my ($pat1, $pat2, $message) = @_;
+
+    eval {
+        $m->eq_pattern($pat1, $pat2);
     };
 
     ok($@, $message);
