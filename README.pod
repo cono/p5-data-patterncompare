@@ -108,6 +108,14 @@ Be careful with the following example:
 Result of the code above is unpredicted. It depends on in what order keys will
 be returned by the C<keys()> function.
 
+=head2 eq_pattern($pattern_a, $pattern_b) : Boolean
+
+This method takes 2 arguments. Returns true if 2 patterns are strictly equal to
+each others.
+
+The main differece to C<compare_pattern() == 0> is that 42 != 43.
+C<$Data::PatterCompare::any> matched only to the same object.
+
 =head1 AUTHOR
 
 cono E<lt>cono@cpan.orgE<gt>
