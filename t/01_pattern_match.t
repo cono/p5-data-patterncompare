@@ -19,7 +19,7 @@ subtest 'simple match' => sub {
     not_match(undef, 42, 'undef does not match value');
 
     match(0.1 + 0.2 + 0.3, 0.6, 'float match');
-    not_match(0.6, 1, 'float ot int match');
+    not_match(0.6, 1, 'float to int match');
 
     match(42, $Data::PatternCompare::any, 'compare int to any');
     match("hello", $Data::PatternCompare::any, 'compare string to any');
@@ -48,7 +48,7 @@ subtest 'hash match' => sub {
 
     # pattern [ VALUE ], will match any kind of arrays [ VALUE, ... ]
     match({data => 42, a => 'b'}, {data => 42}, 'pattern less than test hash');
-    not_match({a => 'b'}, [ data => $Data::PatternCompare::any ], 'any is not match if key is not exists');
+    not_match({a => 'b'}, { data => $Data::PatternCompare::any }, 'any is not match if key is not exists');
 };
 
 subtest 'bugs' => sub {
