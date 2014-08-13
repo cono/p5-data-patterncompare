@@ -41,6 +41,10 @@ subtest 'array match' => sub {
 
     ne_p([42, 1], [42], 'different size of arrays');
     ne_p([], [ $Data::PatternCompare::any ], 'any is not an empty array');
+
+    eq_p([ ], [ ], 'zero size arrays are equal');
+    eq_p([ @Data::PatternCompare::empty ], [ @Data::PatternCompare::empty ], 'equal empty arrays');
+    ne_p([ ], [ @Data::PatternCompare::empty ], 'empty array are not equal to zero size array');
 };
 
 subtest 'hash match' => sub {
@@ -49,6 +53,10 @@ subtest 'hash match' => sub {
 
     ne_p({data => 42, a => 'b'}, {data => 42}, 'hash sizes are not equal');
     ne_p({a => 'b'}, { data => $Data::PatternCompare::any }, 'different hashes with any');
+
+    eq_p({ }, { }, 'zero size hashes are equal');
+    eq_p({ @Data::PatternCompare::empty }, { @Data::PatternCompare::empty }, 'equal empty hashes');
+    ne_p({ }, { @Data::PatternCompare::empty }, 'empty hash are not equal to zero size hash');
 };
 
 done_testing;

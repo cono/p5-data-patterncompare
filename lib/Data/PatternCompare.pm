@@ -9,7 +9,46 @@ use Scalar::Util::Numeric qw(isfloat);
 
 our $VERSION = '0.03';
 
-our $any  = Data::PatternCompare::Any->new;
+sub EMPTY_KEY() { "empty \x{c0}\x{de}" }
+
+our @EXPORT_OK = qw(any empty);
+our $any   = Data::PatternCompare::Any->new;
+our @empty = (EMPTY_KEY, Data::PatternCompare::Empty->new);
+
+sub _any() {
+    $any
+}
+
+sub _empty() {
+    @empty
+}
+
+sub import_to {
+    my ($caller, @export) = @_;
+
+    no strict 'refs';
+    no warnings 'redefine';
+
+    for my $sub (@export) {
+        my $dst = $caller .'::'. $sub;
+        my $src = __PACKAGE__ .'::_'. $sub;
+
+        *$dst = *$src;
+    }
+}
+
+sub import {
+    my $class  = shift;
+    my $caller = caller;
+    my @export;
+    my %is_export_ok = map { $_ => 1 } @EXPORT_OK;
+
+    for my $sub ( @_ ) {
+        push @export, $sub if $is_export_ok{$sub};
+    }
+
+    import_to($caller, @export);
+}
 
 sub new {
     my $class  = shift;
@@ -32,8 +71,31 @@ sub _is_any {
     return 0;
 }
 
+sub _is_empty {
+    my $val = shift;
+
+    if (ref $val eq 'ARRAY') {
+        return 0 unless defined $val->[1];
+
+        my $blessed = blessed($val->[1]) || '';
+        return (
+            defined $val->[0] && $val->[0] eq EMPTY_KEY
+            && $blessed eq 'Data::PatternCompare::Empty'
+        );
+    } else {
+        return 0 unless defined $val->{+EMPTY_KEY};
+
+        my $blessed = blessed($val->{+EMPTY_KEY}) || '';
+        return $blessed eq 'Data::PatternCompare::Empty';
+    }
+}
+
 sub _match_ARRAY {
     my ($self, $got, $expected) = @_;
+
+    if (_is_empty($expected)) {
+        return scalar(@$got) == 0;
+    }
 
     for (my $i = 0; $i < scalar(@$expected); ++$i) {
         if (_is_any($expected->[$i]) && !exists($got->[$i])) {
@@ -47,6 +109,10 @@ sub _match_ARRAY {
 
 sub _match_HASH {
     my ($self, $got, $expected) = @_;
+
+    if (_is_empty($expected)) {
+        return scalar(keys %$got) == 0;
+    }
 
     for my $key ( keys %$expected ) {
         if (_is_any($expected->{$key}) && !exists($got->{$key})) {
@@ -124,6 +190,11 @@ sub pattern_match {
 sub _compare_ARRAY {
     my ($self, $pa, $pb) = @_;
 
+    my @tmp = map { _is_empty($_) } ($pa, $pb);
+    if ($tmp[0] + $tmp[1]) {
+        return $tmp[1] - $tmp[0];
+    }
+
     my $sizea = scalar(@$pa);
     my $sizeb = scalar(@$pb);
 
@@ -142,6 +213,11 @@ sub _compare_ARRAY {
 
 sub _compare_HASH {
     my ($self, $pa, $pb) = @_;
+
+    my @tmp = map { _is_empty($_) } ($pa, $pb);
+    if ($tmp[0] + $tmp[1]) {
+        return $tmp[1] - $tmp[0];
+    }
 
     my $sizea = scalar keys(%$pa);
     my $sizeb = scalar keys(%$pb);
@@ -315,6 +391,10 @@ sub eq_pattern {
 }
 
 package Data::PatternCompare::Any;
+
+sub new { bless({}); }
+
+package Data::PatternCompare::Empty;
 
 sub new { bless({}); }
 
