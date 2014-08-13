@@ -1,5 +1,10 @@
 Release history of Data::PatternCompare
 
+0.04 2013-08-13
+
+  * Add "empty" entity
+  * Add export "empty" and "any"
+
 0.03 2013-08-08
 
   * Add float comparison functionality

@@ -22,7 +22,11 @@ subtest 'simple patterns' => sub {
 subtest 'array pattern' => sub {
     less([1, 2], [1], 'array less if it has more values');
     equal([1, 2], [3, 4], 'equal array patterns');
-    equal([], [], 'empty arrays - equal patterns');
+    equal([], [], 'zero size arrays - equal patterns');
+
+    equal([@Data::PatternCompare::empty], [@Data::PatternCompare::empty], 'empty arrays - equal patterns');
+    less([@Data::PatternCompare::empty], [], 'empty array is less than zero size array');
+    greater([42], [@Data::PatternCompare::empty], 'any array greater than empty array');
 
     greater([42, $Data::PatternCompare::any], [1, 2], 'array with any greater than array with simple types');
 };
@@ -30,8 +34,12 @@ subtest 'array pattern' => sub {
 subtest 'hash pattern' => sub {
     less({ data => 42, a => 'b'}, {data => 42}, 'bigger hashes are more strict than less in pattern comparison');
     equal({data => 42}, {data => 'a'}, 'equal hash patterns');
-    equal({}, {}, 'empty hashes - equal patterns');
+    equal({}, {}, 'zero size hashes - equal patterns');
     equal({qw|a b c d|}, {qw|a b e f|}, 'hash size equal, key intersection are equal');
+
+    equal({@Data::PatternCompare::empty}, {@Data::PatternCompare::empty}, 'empty hashes - equal patterns');
+    less({@Data::PatternCompare::empty}, {}, 'empty hash is less than zero size hash');
+    greater({data => 42}, {@Data::PatternCompare::empty}, 'any hash greater than empty hash');
 
     greater({data => $Data::PatternCompare::any}, {data => 42}, 'hash pattern with any greater than with simple type')
 };

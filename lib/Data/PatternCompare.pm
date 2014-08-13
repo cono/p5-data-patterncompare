@@ -7,9 +7,48 @@ use POSIX;
 use Scalar::Util qw(looks_like_number refaddr blessed);
 use Scalar::Util::Numeric qw(isfloat);
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
-our $any  = Data::PatternCompare::Any->new;
+sub EMPTY_KEY() { "empty \x{c0}\x{de}" }
+
+our @EXPORT_OK = qw(any empty);
+our $any   = Data::PatternCompare::Any->new;
+our @empty = (EMPTY_KEY, Data::PatternCompare::Empty->new);
+
+sub _any() {
+    $any
+}
+
+sub _empty() {
+    @empty
+}
+
+sub import_to {
+    my ($caller, @export) = @_;
+
+    no strict 'refs';
+    no warnings 'redefine';
+
+    for my $sub (@export) {
+        my $dst = $caller .'::'. $sub;
+        my $src = __PACKAGE__ .'::_'. $sub;
+
+        *$dst = *$src;
+    }
+}
+
+sub import {
+    my $class  = shift;
+    my $caller = caller;
+    my @export;
+    my %is_export_ok = map { $_ => 1 } @EXPORT_OK;
+
+    for my $sub ( @_ ) {
+        push @export, $sub if $is_export_ok{$sub};
+    }
+
+    import_to($caller, @export);
+}
 
 sub new {
     my $class  = shift;
@@ -32,8 +71,31 @@ sub _is_any {
     return 0;
 }
 
+sub _is_empty {
+    my $val = shift;
+
+    if (ref $val eq 'ARRAY') {
+        return 0 unless defined $val->[1];
+
+        my $blessed = blessed($val->[1]) || '';
+        return (
+            defined $val->[0] && $val->[0] eq EMPTY_KEY
+            && $blessed eq 'Data::PatternCompare::Empty'
+        );
+    } else {
+        return 0 unless defined $val->{+EMPTY_KEY};
+
+        my $blessed = blessed($val->{+EMPTY_KEY}) || '';
+        return $blessed eq 'Data::PatternCompare::Empty';
+    }
+}
+
 sub _match_ARRAY {
     my ($self, $got, $expected) = @_;
+
+    if (_is_empty($expected)) {
+        return scalar(@$got) == 0;
+    }
 
     for (my $i = 0; $i < scalar(@$expected); ++$i) {
         if (_is_any($expected->[$i]) && !exists($got->[$i])) {
@@ -47,6 +109,10 @@ sub _match_ARRAY {
 
 sub _match_HASH {
     my ($self, $got, $expected) = @_;
+
+    if (_is_empty($expected)) {
+        return scalar(keys %$got) == 0;
+    }
 
     for my $key ( keys %$expected ) {
         if (_is_any($expected->{$key}) && !exists($got->{$key})) {
@@ -124,6 +190,11 @@ sub pattern_match {
 sub _compare_ARRAY {
     my ($self, $pa, $pb) = @_;
 
+    my @tmp = map { _is_empty($_) } ($pa, $pb);
+    if ($tmp[0] + $tmp[1]) {
+        return $tmp[1] - $tmp[0];
+    }
+
     my $sizea = scalar(@$pa);
     my $sizeb = scalar(@$pb);
 
@@ -142,6 +213,11 @@ sub _compare_ARRAY {
 
 sub _compare_HASH {
     my ($self, $pa, $pb) = @_;
+
+    my @tmp = map { _is_empty($_) } ($pa, $pb);
+    if ($tmp[0] + $tmp[1]) {
+        return $tmp[1] - $tmp[0];
+    }
 
     my $sizea = scalar keys(%$pa);
     my $sizeb = scalar keys(%$pb);
@@ -318,6 +394,10 @@ package Data::PatternCompare::Any;
 
 sub new { bless({}); }
 
+package Data::PatternCompare::Empty;
+
+sub new { bless({}); }
+
 42;
 
 __END__
@@ -357,12 +437,28 @@ patterns. Could be used for some kind of multi method dispatching.
 
 This module is far from high performance.
 
+=head1 FUNCTIONS
+
+=head2 import_to($pkg, @export_list)
+
+This function imports functions C<@export_list> in defined package C<$pkg>.
+Available functions: C<any> and C<empty>.
+
 =head1 METHODS
 
-=head2 new()
+=head2 import()
 
-Simple constructor. Does not take any arguments. Returns instance of the
-Data::PatternCompare class.
+By default module does not export anything. You can export 2 functions: C<any>
+and C<empty>.
+
+e.g.
+    use Data::PatternCompare qw(any empty);
+
+=head2 new( epsilon => 0.01 )
+
+It is a constructor. Currently takes only one parameter: C<epsilon> for float
+comparison. Floats are equal if true the following statement: abs(float1 -
+float2) E<lt> epsilon. Returns instance of the Data::PatternCompare class.
 
 =head2 pattern_match($data, $pattern) : Boolean
 
@@ -377,6 +473,11 @@ C<$Data::PatterCompare::any> can be used to match any value.
 
 So call C<pattern_match( DATA, $Data::PatternCompare::any)> will match any
 data: Integers, Strings, Objects, ...
+
+Because of nature of matching method you can't match empty arrays (zero sized
+array patterns can match any amount of data). C<@Data::PatternCompare::empty>
+array was defined. It's also exported via function C<empty>. It matches only
+zero sized arrays.
 
 =head2 compare_pattern($pattern_a, $pattern_b) : Integer
 
@@ -411,7 +512,11 @@ Before matching values inside of the array, length of array is taking into
 consideration. Arrays with bigger length are more strict.
 
 This rule applies because we consider: C<pattern_match([42, 1], [42])> as true
-value.
+value. Because of this C<@Data::PatternCompare::empty> array was created.
+
+You can define empty array pattern like so: C<[ @Data::PatternCompare::empty] >.
+
+Empty (not zero sized) arrays will take precedense over any other arrays.
 
 =head3 Hash
 
@@ -421,6 +526,10 @@ stricter.
 e.g.:
 
     $cmp->compare_pattern({ qw|a b c d| }, { qw|a b| }) # -1
+
+To define empty hash pattern you can use following code:
+
+    $pattern = { @Data::PatternCompare::empty };
 
 Be careful with the following example:
 
@@ -438,7 +547,8 @@ This method takes 2 arguments. Returns true if 2 patterns are strictly equal to
 each others.
 
 The main differece to C<compare_pattern() == 0> is that 42 != 43.
-C<$Data::PatterCompare::any> matched only to the same object.
+C<$Data::PatterCompare::any> and C<@Data::PatternCompare::empty> matched only
+to the same object.
 
 =head1 AUTHOR
 

@@ -40,6 +40,12 @@ subtest 'array match' => sub {
     # pattern [ VALUE ], will match any kind of arrays [ VALUE, ... ]
     match([42, 1], [42], 'pattern less than test array');
     not_match([], [ $Data::PatternCompare::any ], 'any is not an empty array');
+
+    # empty
+    match([], [], 'match empty array to array pattern with zero size');
+    match([1, 2, 3], [], 'match non-empty array to array pattern with zero size');
+    not_match([1, 2, 3], [ @Data::PatternCompare::empty ], 'match non-empty array to "empty" entity');
+    match([], [ @Data::PatternCompare::empty ], 'match empty array to "empty" entity');
 };
 
 subtest 'hash match' => sub {
@@ -49,6 +55,12 @@ subtest 'hash match' => sub {
     # pattern [ VALUE ], will match any kind of arrays [ VALUE, ... ]
     match({data => 42, a => 'b'}, {data => 42}, 'pattern less than test hash');
     not_match({a => 'b'}, { data => $Data::PatternCompare::any }, 'any is not match if key is not exists');
+
+    # empty
+    match({}, {}, 'match empty hash to hash pattern with zero size');
+    match({data => 42}, {}, 'match non-empty hash to hash pattern with zero size');
+    not_match({data => 42}, { @Data::PatternCompare::empty }, 'match non-empty hash to "empty" entity');
+    match({}, { @Data::PatternCompare::empty }, 'match empty hash to "empty" entity');
 };
 
 subtest 'bugs' => sub {
