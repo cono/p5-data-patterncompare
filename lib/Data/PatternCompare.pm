@@ -7,7 +7,7 @@ use POSIX;
 use Scalar::Util qw(looks_like_number refaddr blessed);
 use Scalar::Util::Numeric qw(isfloat);
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 sub EMPTY_KEY() { "empty \x{c0}\x{de}" }
 
@@ -528,7 +528,7 @@ e.g.:
     $cmp->compare_pattern({ qw|a b c d| }, { qw|a b| }) # -1
 
 To define empty hash pattern you can use following code:
-    
+
     $pattern = { @Data::PatternCompare::empty };
 
 Be careful with the following example:
